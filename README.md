@@ -123,7 +123,7 @@ But we will use an alternative solution where we launch the Docker registry and 
    ```bash
    docker push localhost:5000/student_list_api.img:v2
     ```
-To access to the registry interface, we open the web browser and type http://localhost:8080§. (Update the ip address if the docker container is running in a remote machine).
+To access to the registry interface, we open the web browser and type http://localhost:8080. (Update the ip address if the docker container is running in a remote machine).
 ![](https://github.com/Abdelhamid-Younes/docker_mini_project/blob/main/images/pozos_registry.png?raw=true)
 
 ## Conclusion
