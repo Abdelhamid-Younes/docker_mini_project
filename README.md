@@ -58,99 +58,73 @@ To build the Docker image from this Dockerfile, you would navigate to the direct
 docker build . -t student_list_api.img
 docker images
 ```
+![](https://github.com/Abdelhamid-Younes/docker_mini_project/blob/main/images/Capture%20d'%C3%A9cran%202024-05-20%20123246.png?raw=true)
+
+Now, it's time to run the container and test it:
+![](https://github.com/Abdelhamid-Younes/docker_mini_project/blob/main/images/Capture%20d'%C3%A9cran%202024-05-20%20125807.png?raw=true)
+To verify the API and make sure the it is correctly responding we can run the following curl command:
+  ```bash
+  curl -u toto:python -X GET http://172.17.0.2:5000/pozos/api/v1.0/get_student_ages
+  ```  
+  ![](https://github.com/Abdelhamid-Younes/docker_mini_project/blob/main/images/curl_result.png?raw=true)
 
 
+## Infrastructure As Code
 
+After testing the API image, we need now to put all together and deploy it, using docker-compose.
 
+The docker-compose.yml file defines two services for deploying the POZOS "student_list" application:
+1. **php_app**: This service represents the web application:
+   - *depends_on*: Ensures the API service starts before the web app.
+   - *ports*: Exposes port 80 to the host.
+   - *networks*: Connects to a custom network student_list_network.
+   - *volumes*: Binds the local website directory to /var/www/html in the container to serve the custom website.
+   - *environment*: Sets environment variables for USERNAME and PASSWORD to enable the web app to authenticate with the API.
+   - *image*: Uses the php:apache image.
+2. **student_list_api**: This service represents the API:
+   - *networks*: Connects to the student_list_network.
+   - *volumes*: Mounts the local simple_api directory to /data/ in the container to provide the API with the necessary data.
+   - *image*: Uses the custom-built student_list_api_img image.
 
-Copy the requirements.txt file into the container in the root "/" directory to install the packages needed to start up our application
-
-to launch the installation, use this command
-
+Before runnig and creating the services described in docker-compose.yml file, we have to remove the api container created previously :
 ```bash
-pip3 install -r /requirements.txt
+docker stop student_list_api
+docker rm student_list_api
 ```
-- Persistent data (volume)
-
-Create data folder at the root "/" where data will be stored and declare it as a volume
-
-You will use this folder to mount student list
-
-- API Port
-
-To interact with this API expose 5000 port
-
-- CMD
-
-When container start, it must run the student_age.py (copied at step 4), so it should be something like
-```bash 
-CMD [ "python3", "./student_age.py" ]
+Now we launch the two services by running this command:
+```bash
+docker-compose up
 ```
+![](https://github.com/Abdelhamid-Younes/docker_mini_project/blob/main/images/docker-compose%20up.png?raw=true)
+Once the services are running, we open a web browser and try to access the web application on this URL: 
+*http://localhost:80* (don't forget tu update the ip address if the docker container is running in a remote machine).
+![](https://github.com/Abdelhamid-Younes/docker_mini_project/blob/main/images/via%20browser.png?raw=true)
 
-Build your image and try to run it (don't forget to mount *student_age.json* file at */data/student_age.json* in the container), check logs and verify that the container is listening and is  ready to answer
+## Docker Registry
+To deploy a private Docker registry and store our built images, we can create a docker-compose file with two services, registry service and the UI service.
+But we will use an alternative solution where we launch the Docker registry and the registry UI as separate containers. We can achieve this by creating and running each container individually. Here are the steps below:
+- Before creating containers, we have to create a network to allow contact between them using their names only.
+  ```bash
+  docker network create pozos_network --driver=bridge
+  ```
+- We used the following command to start the Docker registry:
+  ```bash
+  docker run -d -p 5000:5000 -e REGISTRY_STORAGE_DELETE_ENABLED=true -e REGISTRY_HTTP_HEADERS_Access-Control-Allow-Methods=[HEAD,GET,OPTIONS,DELETE] -e  REGISTRY_HTTP_HEADERS_Access-Control-Credentials=[true] -e REGISTRY_HTTP_HEADERS_Access-Control-Allow-Headers=[Authorization,Accept,Cache-Control] -e REGISTRY_HTTP_HEADERS_Access-Control-Expose-Headers=[Docker-Content-Digest] --net pozos_network --name pozos_registry registry:2
+  ```
+- And the following command to start the Docker Registry UI:
+  ```bash
+   docker run -d -p 8090:80 -e NGINX_PROXY_PASS_URL=http://pozos_registry:5000 --net pozos_network -e DELETE_IMAGES=true -e REGISTRY_TITLE=Pozos_Registry --name pozos_registry_ui joxit/docker-registry-ui:2
+   ```
+- Then we have tagged our student_api image with the registry URL, as follows:
+   ```bash
+   docker tag student_list_api.img localhost:5000/student_list_api.img:v2
+   ```
+- Finnaly, we've pushed the new image to the private registry, like this:
+   ```bash
+   docker push localhost:5000/student_list_api.img:v2
+    ```
+To access to the registry interface, we open the web browser and type http://localhost:8080§. (Update the ip address if the docker container is running in a remote machine).
+![](https://github.com/Abdelhamid-Younes/docker_mini_project/blob/main/images/pozos_registry.png?raw=true)
 
-Run this command to make sure that the API correctly responding (take a screenshot for delivery purpose)
-NB: Start your container using this specific port to reach it
-Port: 5000
-```bash 
-curl -u toto:python -X GET http://<host IP>:<API exposed port>/pozos/api/v1.0/get_student_ages
-```
-
-**Congratulation! Now you are ready for the next step (docker-compose.yml)**
-
-## Infrastructure As Code (5 points)
-
-After testing your API image, you need to put all together and deploy it, using docker-compose.
-
-The ***docker-compose.yml*** file will deploy two services :
-
-- website: the end-user interface with the following characteristics
-   - image: php:apache
-   - environment: you will provide the USERNAME and PASSWORD to enable the web app to access the API through authentication
-   - volumes: to avoid php:apache image run with the default website, we will bind the website given by POZOS to use. You must have something like
-`./website:/var/www/html`
-   - depend on: you need to make sure that the API will start first before the website
-   - port: do not forget to expose the port
-- API: the image builded before should be used with the following specification
-   - image: the name of the image builded previously
-   - volumes: You will mount student_age.json file in /data/student_age.json
-   - port: don't forget to expose the port
-   - networks: don't forget to add specific network for your project
-
-Delete your previous created container
-
-Run your docker-compose.yml
-
-Finally, reach your website and click on the bouton "List Student"
-
-**If the list of the student appears, you are successfully dockerizing the POZOS application! Congratulation (make a screenshot)**
-
-## Docker Registry (4 points)
-
-POZOS need you to deploy a private registry and store the built images
-
-So you need to deploy :
-
-- a docker [registry](https://docs.docker.com/registry/ "registry")
-- a web [interface](https://hub.docker.com/r/joxit/docker-registry-ui/ "interface") to see the pushed image as a container
-
-Or you can use [Portus](http://port.us.org/ "Portus") to run both
-
-Don't forget to push your image on your private registry and show them in your delivery.
-
-## Delivery (4 points)
-
-Your delivery must be link of your repository with your name that contain:
-- A README file with your screenshots and explanations.
-- Configuration files used to realize the graded exercise (docker-compose.yml and Dockerfile).
-
-Your delivery will be evaluated on:
-
-- Explanations quality
-- Screenshots quality (relevance, visibility)
-- Presentation quality
-- The structure of your github repository
-
-Send your delivery at ***eazytrainingfr@gmail.com*** and we will provide you the link of the solution.
-
-![good luck](https://user-images.githubusercontent.com/18481009/84582398-cad38100-adeb-11ea-95e3-2a9d4c0d5437.gif)
+## Conclusion
+This project showed how Docker can improve the deployment, scalability, and availability of POZOS's "student_list" application. By using Docker containers and setting up a private registry, we made the infrastructure more efficient and easier to manage. 
