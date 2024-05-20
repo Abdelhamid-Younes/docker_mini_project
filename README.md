@@ -9,7 +9,7 @@ This repo is a simple application to list student with a webserver (PHP) and API
 
 ## Introduction
 This project aims to demonstrate how Docker can enhance the deployment process, improve scalability, and ensure high availability for POZOS, an IT company located in France that develops software for high schools.
-The goal of this practice exam is to assess your ability to manage a Docker infrastructure, focusing on the following areas:
+The goal of this practice exam is to assess my ability to manage a Docker infrastructure, focusing on the following areas:
 - improve an existed application deployment process
 - versioning your infrastructure release
 - address best practice when implementing docker infrastructure
@@ -20,7 +20,7 @@ The goal of this practice exam is to assess your ability to manage a Docker infr
 
 
 ## Tasks
-My tasks for this project were to:
+Our tasks for this project were to:
 
 - Build a separate Docker container for each module of the application.
 - Configure the containers to interact seamlessly with each other.
@@ -29,8 +29,8 @@ My tasks for this project were to:
 ## Application
 The application, named "student_list," is designed to display a list of students with their ages. It has two modules:
 - A REST API with basic authentication that serves the student list from a JSON file.
-- A web app written in HTML and PHP that allows end-users to view the student list.
-For this project, you need to provide a **Dockerfile** and a **docker-compose.yml** file.
+- A web app written in HTML and PHP that allows end-users to view the students list.
+For this project, i need to provide a **Dockerfile** and a **docker-compose.yml** file.
 
 Let's now go over the role of each file:
 - docker-compose.yml: to launch the application (API and web app)
@@ -40,28 +40,29 @@ Let's now go over the role of each file:
 - student_age.py: contains the source code of the API in python
 - index.php: PHP  page where end-user will be connected to interact with the service to list students with their age.
 
-## Build and test
-
-POZOS will give you information to build the API container
-
-- Base image
-
-To build API image you must use "python:3.8-buster"
-
-- Maintainer
-
-Please don't forget to specify the maintainer information
-
-- Add the source code
-
-You need to copy the source code of the API in the container at the root "/" path
-
-- Prerequisite
-
-The API is using FLASK engine,  you need to install some package 
+## Building and testing images
+- According to the dockerfile of api image we have selected *python:3.8-buster* that uses the official Python 3.8 image based on Debian Buster.
+- Then we have copied the *student_age.py* and *requirements.txt* files from the local machine into the root directory of the image "/".
+- Next we have have updated and installed system and python dependencies.
 ```bash
-apt update -y && apt install python-dev python3-dev libsasl2-dev python-dev libldap2-dev libssl-dev -y
+apt-get update -y && apt-get install python-dev python3-dev libsasl2-dev python-dev libldap2-dev libssl-dev -y
+pip install --upgrade pip && pip3 install -r /requirements.txt
 ```
+- Then we indicated on which port the container will be listen at runtime (5000).
+- Finally, we have defined the entry point for the container. When the container starts, it will run the command
+```bash
+python3 ./student_age.py
+```
+To build the Docker image from this Dockerfile, you would navigate to the directory containing the Dockerfile *simple_api* and run the following command:
+```bash
+docker build . -t student_list_api.img
+docker images
+```
+
+
+
+
+
 Copy the requirements.txt file into the container in the root "/" directory to install the packages needed to start up our application
 
 to launch the installation, use this command
