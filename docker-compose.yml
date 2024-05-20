@@ -21,7 +21,7 @@ services:
             - student_list_network
         volumes:
             - ./simple_api/:/data/
-        image: student_list_api_img
+        image: student_list_api.img
 
 networks:
     student_list_network:
