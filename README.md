@@ -102,19 +102,19 @@ Once the services are running, we open a web browser and try to access the web a
 
 ## Docker Registry
 To deploy a private Docker registry and store our built images, we can create a docker-compose file with two services, registry service and the UI service.
-But we will use an alternative solution where we launch the Docker registry and the registry UI as separate containers. We can achieve this by creating and running each container individually. Here are the steps below:
-- Before creating containers, we have to create a network to allow contact between them using their names only.
+his approach simplifies the process by allowing us to define and manage both services together:
+- **Services**:
+  - `registry`: This service runs the Docker registry on port 5000 and allows for image deletion and necessary HTTP headers.
+  - `registry_ui`: This service provides a web UI for managing the Docker registry, accessible on port 8090.
+
+- **Networks**:
+  - `pozos_network`: A custom bridge network allowing communication between the registry and its UI using container names.
+
+- We used the following command to start the Docker compose stack:
   ```bash
-  docker network create pozos_network --driver=bridge
+docker-compose -f docker-compose.registry.yml up -d
+
   ```
-- We used the following command to start the Docker registry:
-  ```bash
-  docker run -d -p 5000:5000 -e REGISTRY_STORAGE_DELETE_ENABLED=true -e REGISTRY_HTTP_HEADERS_Access-Control-Allow-Methods=[HEAD,GET,OPTIONS,DELETE] -e  REGISTRY_HTTP_HEADERS_Access-Control-Credentials=[true] -e REGISTRY_HTTP_HEADERS_Access-Control-Allow-Headers=[Authorization,Accept,Cache-Control] -e REGISTRY_HTTP_HEADERS_Access-Control-Expose-Headers=[Docker-Content-Digest] --net pozos_network --name pozos_registry registry:2
-  ```
-- And the following command to start the Docker Registry UI:
-  ```bash
-   docker run -d -p 8090:80 -e NGINX_PROXY_PASS_URL=http://pozos_registry:5000 --net pozos_network -e DELETE_IMAGES=true -e REGISTRY_TITLE=Pozos_Registry --name pozos_registry_ui joxit/docker-registry-ui:2
-   ```
 - Then we have tagged our student_api image with the registry URL, as follows:
    ```bash
    docker tag student_list_api.img localhost:5000/student_list_api.img:v2
