@@ -102,7 +102,7 @@ Once the services are running, we open a web browser and try to access the web a
 
 ## Docker Registry
 To deploy a private Docker registry and store our built images, we can create a docker-compose file with two services, registry service and the UI service.
-his approach simplifies the process by allowing us to define and manage both services together:
+This approach simplifies the process by allowing us to define and manage both services together:
 - **Services**:
   - `registry`: This service runs the Docker registry on port 5000 and allows for image deletion and necessary HTTP headers.
   - `registry_ui`: This service provides a web UI for managing the Docker registry, accessible on port 8090.
@@ -112,8 +112,7 @@ his approach simplifies the process by allowing us to define and manage both ser
 
 - We used the following command to start the Docker compose stack:
   ```bash
-docker-compose -f docker-compose.registry.yml up -d
-
+  docker-compose -f docker-compose.registry.yml up -d
   ```
 - Then we have tagged our student_api image with the registry URL, as follows:
    ```bash
